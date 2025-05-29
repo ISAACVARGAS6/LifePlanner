@@ -1,8 +1,10 @@
+# app/schemas/project_schema.py
+
 from datetime import datetime, date
 from typing import Optional, List
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 from .common import ProjectStatus, PriorityLevel
-from .task_schema import TaskOut
+from .common_schemas import TaskSummary
 import pytz
 import logging
 
@@ -27,28 +29,19 @@ class ProjectUpdate(BaseModel):
         logger.debug(f"Validando deadline. Valor recibido: {v}, Tipo: {type(v)}")
         if v is not None:
             try:
-                # Si es string, convertir a datetime
                 if isinstance(v, str):
                     logger.debug(f"Convirtiendo string a datetime: {v}")
                     v = datetime.fromisoformat(v.replace('Z', '+00:00'))
                     logger.debug(f"Resultado después de fromisoformat: {v}")
-                
-                # Asegurar que la fecha tiene zona horaria
                 if v.tzinfo is None:
                     logger.debug("Fecha sin zona horaria, añadiendo UTC")
                     v = pytz.UTC.localize(v)
-                
-                # Convertir a UTC
                 v = v.astimezone(pytz.UTC)
-                logger.debug(f"Fecha final en UTC: {v}")
-                
-                # Comparar solo las fechas
                 today = date.today()
                 logger.debug(f"Comparando con hoy ({today})")
                 if v.date() < today:
                     logger.debug("Fecha en el pasado")
                     raise ValueError("La fecha límite no puede estar en el pasado")
-                
                 logger.debug(f"Validación exitosa, retornando: {v}")
                 return v
             except Exception as e:
@@ -86,20 +79,7 @@ class ProjectOut(BaseModel):
     status: ProjectStatus = "activo"
     created_at: datetime
     updated_at: datetime
-    tasks: List[TaskOut] = []
-
-    model_config = ConfigDict(from_attributes=True)
-
-class TaskInProject(BaseModel):
-    id: int
-    title: str
-    description: Optional[str] = None
-    status: str
-    priority: str
-    due_date: Optional[datetime] = None
-    created_at: datetime
-    updated_at: datetime
-    project_id: int
+    tasks: List[TaskSummary] = []
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -107,6 +87,6 @@ class Project(ProjectCreate):
     id: int
     created_at: datetime
     updated_at: datetime
-    tasks: List[TaskInProject] = []
+    tasks: List[TaskSummary] = []
 
     model_config = ConfigDict(from_attributes=True)

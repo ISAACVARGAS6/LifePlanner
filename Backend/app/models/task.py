@@ -59,19 +59,20 @@ class Task(Base):
     @validates('due_date')
     def validate_due_date(self, key, due_date):
         if due_date:
-            if isinstance(due_date, str):
-                try:
-                    due_date = datetime.fromisoformat(due_date)
-                except Exception as e:
-                    raise ValueError(f"Formato de fecha inválido en modelo: {e}")
-            elif not isinstance(due_date, datetime):
-                raise ValueError("due_date debe ser string o datetime")
+           if isinstance(due_date, str):
+            try:
+                due_date = datetime.fromisoformat(due_date)
+            except Exception as e:
+                raise ValueError(f"Formato de fecha inválido en modelo: {e}")
+        elif not isinstance(due_date, datetime):
+            raise ValueError("due_date debe ser string o datetime")
 
-            current = datetime.now(timezone.utc)
-            if due_date.tzinfo is None:
-                due_date = due_date.replace(tzinfo=timezone.utc)
+        if due_date.tzinfo is None:
+            due_date = due_date.replace(tzinfo=timezone.utc)
 
-            if due_date < current:
-                raise ValueError("La fecha límite no puede estar en el pasado")
+        current_date = datetime.now(timezone.utc).date()
+        target_date = due_date.date()
+
+        if target_date < current_date:
+            raise ValueError("La fecha límite no puede estar en el pasado (día anterior)")
         return due_date
-

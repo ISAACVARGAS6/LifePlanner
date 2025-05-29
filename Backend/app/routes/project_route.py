@@ -56,9 +56,26 @@ async def create_project(project: ProjectCreate, db: Session = Depends(get_db)):
 
 
 @router.get("/", response_model=List[ProjectOut])
-async def get_projects(db: Session = Depends(get_db)):
+async def get_projects(
+    status: str = None,
+    priority: str = None,
+    due_date_order: str = None,
+    db: Session = Depends(get_db)
+):
     try:
-        projects = db.query(Project).options(joinedload(Project.tasks)).all()
+        query = db.query(Project).options(joinedload(Project.tasks))
+
+        if status:
+            query = query.filter(Project.status == status)
+        if priority:
+            query = query.filter(Project.priority == priority)
+        if due_date_order:
+            if due_date_order.lower() == 'asc':
+                query = query.order_by(Project.deadline.asc())
+            elif due_date_order.lower() == 'desc':
+                query = query.order_by(Project.deadline.desc())
+
+        projects = query.all()
         return [project.to_dict() for project in projects]
     except Exception as e:
         logger.error(f"Error al obtener proyectos: {str(e)}")
@@ -68,31 +85,20 @@ async def get_projects(db: Session = Depends(get_db)):
             detail=f"Error al obtener proyectos: {str(e)}"
         )
 
-
 @router.get("/{project_id}", response_model=ProjectOut)
 async def get_project(project_id: int, db: Session = Depends(get_db)):
     try:
-        project = db.query(Project)\
-            .options(joinedload(Project.tasks))\
-            .filter(Project.id == project_id)\
-            .first()
-
+        project = db.query(Project).filter(Project.id == project_id).first()
         if not project:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Proyecto no encontrado"
-            )
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Proyecto no encontrado")
         return project.to_dict()
-    except HTTPException:
-        raise
     except Exception as e:
-        logger.error(f"Error al obtener proyecto: {str(e)}")
+        logger.error(f"Error al obtener el proyecto {project_id}: {str(e)}")
         logger.error(traceback.format_exc())
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error al obtener proyecto: {str(e)}"
+            detail=f"Error al obtener el proyecto {project_id}: {str(e)}"
         )
-
 
 @router.get("/{project_id}/tasks", response_model=List[TaskOut])
 async def get_tasks_by_project(project_id: int, db: Session = Depends(get_db)):

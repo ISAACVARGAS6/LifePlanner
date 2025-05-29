@@ -1,15 +1,36 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
+from sqlalchemy import and_, asc, desc
 from app.db import get_db
 from app.models.task import Task
 from app.schemas.task_schema import TaskCreate, TaskUpdate 
-from typing import List
+from typing import List, Optional
 
 router = APIRouter()
 
 @router.get("/", response_model=List[TaskCreate])
-def get_tasks(db: Session = Depends(get_db)):
-    tasks = db.query(Task).all()
+def get_tasks(
+    db: Session = Depends(get_db),
+    project_id: Optional[int] = Query(None),
+    status: Optional[str] = Query(None, enum=["pendiente", "en_progreso", "completada"]),
+    priority: Optional[str] = Query(None, enum=["baja", "media", "alta"]),
+    tag: Optional[str] = Query(None),
+    due_date_order: Optional[str] = Query("asc", enum=["asc", "desc"])
+):
+    query = db.query(Task)
+
+    if project_id:
+        query = query.filter(Task.project_id == project_id)
+    if status:
+        query = query.filter(Task.status == status)
+    if priority:
+        query = query.filter(Task.priority == priority)
+    if due_date_order == "asc":
+        query = query.order_by(asc(Task.due_date))
+    else:
+        query = query.order_by(desc(Task.due_date))
+
+    tasks = query.all()
     return tasks
 
 @router.get("/{task_id}", response_model=TaskCreate)
@@ -38,7 +59,6 @@ def update_task(task_id: int, updated_task: TaskUpdate, db: Session = Depends(ge
     db.refresh(task)
     return task
 
-# ✅ Opción simple: solo por task_id
 @router.delete("/{task_id}")
 def delete_task_by_id(task_id: int, db: Session = Depends(get_db)):
     task = db.query(Task).filter(Task.id == task_id).first()
@@ -48,7 +68,6 @@ def delete_task_by_id(task_id: int, db: Session = Depends(get_db)):
     db.commit()
     return {"message": "Tarea borrada exitosamente"}
 
-# ✅ Opción estricta: por project_id y task_id
 @router.delete("/project/{project_id}/task/{task_id}")
 def delete_task_with_project(project_id: int, task_id: int, db: Session = Depends(get_db)):
     task = db.query(Task).filter(Task.id == task_id, Task.project_id == project_id).first()
@@ -57,4 +76,5 @@ def delete_task_with_project(project_id: int, task_id: int, db: Session = Depend
     db.delete(task)
     db.commit()
     return {"message": "Tarea borrada exitosamente (verificado por proyecto)"}
+
 
