@@ -4,6 +4,7 @@ from datetime import datetime, timezone
 from pydantic import BaseModel, Field, field_validator
 from typing import Optional, Literal
 from ..db import Base
+from ..chibi_manager import ChibiManager
 import pytz
 
 class ProjectBase(BaseModel):
@@ -136,6 +137,28 @@ class Project(Base):
                 raise e
         return deadline
 
+    def get_chibi(self) -> str:
+        """
+        Obtiene el chibi correspondiente al estado y prioridad del proyecto
+        
+        Returns:
+            str: Nombre del archivo de imagen del chibi
+        """
+        return ChibiManager.get_project_chibi(self.status, self.priority)
+    
+    def get_chibi_url(self, base_url: str = "/static/chibis/") -> str:
+        """
+        Obtiene la URL completa del chibi del proyecto
+        
+        Args:
+            base_url: URL base donde se almacenan los chibis
+            
+        Returns:
+            str: URL completa del chibi
+        """
+        chibi_filename = self.get_chibi()
+        return ChibiManager.get_chibi_url(chibi_filename, base_url)
+
     def to_dict(self):
         return {
             "id": self.id,
@@ -147,5 +170,7 @@ class Project(Base):
             "deadline": self.deadline.isoformat() if self.deadline else None,
             "created_at": self.created_at.isoformat(),
             "updated_at": self.updated_at.isoformat(),
+            "chibi": self.get_chibi(),
+            "chibi_url": self.get_chibi_url(),
             "tasks": [task.to_dict() for task in self.tasks]
         }

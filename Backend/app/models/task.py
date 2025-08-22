@@ -2,6 +2,7 @@ from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, func
 from sqlalchemy.orm import relationship, validates
 from datetime import datetime, timezone
 from ..db import Base
+from ..chibi_manager import ChibiManager
 
 class Task(Base):
     __tablename__ = "tasks"
@@ -19,6 +20,28 @@ class Task(Base):
 
     project = relationship("Project", back_populates="tasks")
 
+    def get_chibi(self) -> str:
+        """
+        Obtiene el chibi correspondiente al estado y prioridad de la tarea
+        
+        Returns:
+            str: Nombre del archivo de imagen del chibi
+        """
+        return ChibiManager.get_task_chibi(self.status, self.priority)
+    
+    def get_chibi_url(self, base_url: str = "/static/chibis/") -> str:
+        """
+        Obtiene la URL completa del chibi de la tarea
+        
+        Args:
+            base_url: URL base donde se almacenan los chibis
+            
+        Returns:
+            str: URL completa del chibi
+        """
+        chibi_filename = self.get_chibi()
+        return ChibiManager.get_chibi_url(chibi_filename, base_url)
+
     def to_dict(self):
         return {
             "id": self.id,
@@ -29,7 +52,9 @@ class Task(Base):
             "due_date": self.due_date.isoformat() if self.due_date else None,
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
-            "project_id": self.project_id
+            "project_id": self.project_id,
+            "chibi": self.get_chibi(),
+            "chibi_url": self.get_chibi_url()
         }
 
     @validates('status')
@@ -58,8 +83,10 @@ class Task(Base):
 
     @validates('due_date')
     def validate_due_date(self, key, due_date):
-        if due_date:
-           if isinstance(due_date, str):
+        if due_date is None:
+            return None
+            
+        if isinstance(due_date, str):
             try:
                 due_date = datetime.fromisoformat(due_date)
             except Exception as e:
@@ -70,9 +97,8 @@ class Task(Base):
         if due_date.tzinfo is None:
             due_date = due_date.replace(tzinfo=timezone.utc)
 
-        current_date = datetime.now(timezone.utc).date()
-        target_date = due_date.date()
-
-        if target_date < current_date:
-            raise ValueError("La fecha límite no puede estar en el pasado (día anterior)")
+        # Solo validar fechas pasadas para tareas nuevas, no para actualizaciones
+        # if due_date.date() < datetime.now(timezone.utc).date():
+        #     raise ValueError("La fecha límite no puede estar en el pasado (día anterior)")
+        
         return due_date

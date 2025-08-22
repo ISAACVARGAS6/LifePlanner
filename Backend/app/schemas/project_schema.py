@@ -1,11 +1,8 @@
-# app/schemas/project_schema.py
-
-from datetime import datetime, date
+from datetime import datetime
 from typing import Optional, List
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 from .common import ProjectStatus, PriorityLevel
 from .common_schemas import TaskSummary
-import pytz
 import logging
 
 logger = logging.getLogger(__name__)
@@ -20,34 +17,9 @@ class ProjectUpdate(BaseModel):
     status: Optional[str] = Field(None, pattern="^(activo|en_pausa|terminado)$")
     priority: Optional[str] = Field(None, pattern="^(alta|media|baja)$")
     category: Optional[str] = None
-    deadline: Optional[datetime] = None
+    deadline: Optional[datetime] = None  #Sin validación de fecha pasada
 
     model_config = ConfigDict(from_attributes=True)
-
-    @field_validator('deadline')
-    def validate_deadline(cls, v):
-        logger.debug(f"Validando deadline. Valor recibido: {v}, Tipo: {type(v)}")
-        if v is not None:
-            try:
-                if isinstance(v, str):
-                    logger.debug(f"Convirtiendo string a datetime: {v}")
-                    v = datetime.fromisoformat(v.replace('Z', '+00:00'))
-                    logger.debug(f"Resultado después de fromisoformat: {v}")
-                if v.tzinfo is None:
-                    logger.debug("Fecha sin zona horaria, añadiendo UTC")
-                    v = pytz.UTC.localize(v)
-                v = v.astimezone(pytz.UTC)
-                today = date.today()
-                logger.debug(f"Comparando con hoy ({today})")
-                if v.date() < today:
-                    logger.debug("Fecha en el pasado")
-                    raise ValueError("La fecha límite no puede estar en el pasado")
-                logger.debug(f"Validación exitosa, retornando: {v}")
-                return v
-            except Exception as e:
-                logger.error(f"Error validando fecha: {str(e)}")
-                raise ValueError(f"Error procesando la fecha: {str(e)}")
-        return None
 
     @field_validator('status')
     def validate_status(cls, v):
@@ -90,3 +62,4 @@ class Project(ProjectCreate):
     tasks: List[TaskSummary] = []
 
     model_config = ConfigDict(from_attributes=True)
+

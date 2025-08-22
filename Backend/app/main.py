@@ -1,6 +1,7 @@
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 import sys
@@ -8,7 +9,7 @@ from pathlib import Path
 import logging
 
 from app.db import Base, engine, SessionLocal
-from app.routes import project_route, task_route
+from app.routes import project_route, task_route, chibi_route
 
 # 🚨 IMPORTAR MODELOS para que Base los registre antes de create_all()
 from app.models import project, task
@@ -22,12 +23,24 @@ def run_migration(module_name: str, function_name: str, success_message: str):
     try:
         module = __import__(f"app.migrations.{module_name}", fromlist=[function_name])
         migration_func = getattr(module, function_name)
-        if migration_func():
-            logger.info(success_message)
-            return True
+        
+        # Si la función necesita db_path, proporcionarlo
+        if function_name == "truncate_titles":
+            db_path = str(Path(__file__).parent.parent / "lifeplanner.db")
+            if migration_func(db_path):
+                logger.info(success_message)
+                return True
+            else:
+                logger.warning(f"⚠️ Migración {module_name} no completada")
+                return False
         else:
-            logger.warning(f"⚠️ Migración {module_name} no completada")
-            return False
+            # Para otras migraciones que no necesitan parámetros
+            if migration_func():
+                logger.info(success_message)
+                return True
+            else:
+                logger.warning(f"⚠️ Migración {module_name} no completada")
+                return False
     except ImportError:
         logger.warning(f"⚠️ Migración {module_name} no disponible")
         return False
@@ -49,13 +62,9 @@ async def lifespan(app: FastAPI):
         if root_path not in sys.path:
             sys.path.append(root_path)
         
-        # Ejecutar migraciones
+        # Ejecutar migraciones solo si son necesarias
         run_migration("truncate_titles", "truncate_titles", 
                       "✅ Migración de truncado de títulos ejecutada correctamente")
-        run_migration("add_priority_to_tasks", "run_migration",
-                      "✅ Migración de prioridades ejecutada correctamente")
-        run_migration("add_status_to_projects", "run_migration",
-                      "✅ Migración de status ejecutada correctamente")
         
     except SQLAlchemyError as e:
         logger.error(f"❌ Error al conectar con la base de datos: {str(e)}")
@@ -84,6 +93,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Montar archivos estáticos
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
 # Inclusión de routers
 app.include_router(
     project_route.router,
@@ -95,6 +107,12 @@ app.include_router(
     task_route.router,
     prefix="/lifeplanner/tasks",
     tags=["tasks"]
+)
+
+app.include_router(
+    chibi_route.router,
+    prefix="/lifeplanner",
+    tags=["chibis"]
 )
 
 # Ruta de salud
