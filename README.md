@@ -18,7 +18,7 @@ Su diferencial es un **personaje chibi animado** que reacciona al progreso o ret
 ## 🛠️ Tecnologías usadas
 - **Frontend:** React Native (Expo SDK 54)  
 - **Backend (API):** FastAPI (Python)  
-- **Base de datos:** MySQL (a través del backend)  
+- **Base de datos:** SQLite 
 - **Monetización:** Google AdMob  
 - **Control de versiones:** Git + GitHub  
 - **Publicación:** Google Play Console  
