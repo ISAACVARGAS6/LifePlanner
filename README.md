@@ -46,7 +46,7 @@ Su diferencial es un **personaje chibi animado** que reacciona al progreso o ret
 ### Pasos
 ```bash
 # Clonar repositorio
-git clone https://github.com/TuUsuario/LifePlanner.git
+git clone https://github.com/ISAACVARGAS6/LifePlanner.git
 cd LifePlanner
 
 # Instalar dependencias
