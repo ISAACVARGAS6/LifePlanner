@@ -1,0 +1,43 @@
+name: EAS Build Direct
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: package-lock.json
+        
+    - name: Install EAS CLI
+      run: npm install -g eas-cli
+      
+    - name: Install dependencies
+      run: npm install --legacy-peer-deps
+        
+    - name: Login to EAS
+      run: eas login --non-interactive
+      env:
+        EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        
+    - name: Build AAB
+      run: eas build --platform android --profile production --non-interactive --local
+        
+    - name: Upload AAB
+      uses: actions/upload-artifact@v4
+      with:
+        name: app-release.aab
+        path: "*.aab"
