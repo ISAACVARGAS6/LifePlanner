@@ -1,0 +1,55 @@
+name: Test Build Steps
+
+on:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        
+    - name: Setup Java
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+        
+    - name: Setup Android SDK
+      uses: android-actions/setup-android@v3
+      
+    - name: Test Node.js
+      run: |
+        node --version
+        npm --version
+        
+    - name: Test Java
+      run: |
+        java --version
+        javac --version
+        
+    - name: Test Android SDK
+      run: |
+        echo $ANDROID_HOME
+        ls $ANDROID_HOME
+        
+    - name: Install dependencies
+      run: |
+        npm install --legacy-peer-deps
+        
+    - name: Test Expo
+      run: |
+        npx expo --version
+        npx expo doctor
+        
+    - name: Test prebuild
+      run: |
+        rm -rf android
+        npx expo prebuild --platform android --clean --verbose
