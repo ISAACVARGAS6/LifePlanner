@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <!-- Fondo con gradiente -->
+  <defs>
+    <linearGradient id="backgroundGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FFB6C1;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#FFC0CB;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#FFE4E1;stop-opacity:1" />
+    </linearGradient>
+    
+    <linearGradient id="sakuraGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FF69B4;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#FF1493;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#DC143C;stop-opacity:1" />
+    </linearGradient>
+    
+    <linearGradient id="leafGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#90EE90;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#32CD32;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Fondo redondeado -->
+  <rect width="512" height="512" rx="120" ry="120" fill="url(#backgroundGradient)" />
+  
+  <!-- Sombra sutil -->
+  <rect width="512" height="512" rx="120" ry="120" fill="none" stroke="rgba(0,0,0,0.1)" stroke-width="2"/>
+  
+  <!-- Flor de Sakura principal -->
+  <g transform="translate(256, 200)">
+    <!-- Pétalos de la flor -->
+    <g>
+      <!-- Pétalo superior -->
+      <ellipse cx="0" cy="-60" rx="25" ry="45" fill="url(#sakuraGradient)" transform="rotate(0)" />
+      <!-- Pétalo derecho -->
+      <ellipse cx="42" cy="-42" rx="25" ry="45" fill="url(#sakuraGradient)" transform="rotate(45)" />
+      <!-- Pétalo inferior derecho -->
+      <ellipse cx="42" cy="42" rx="25" ry="45" fill="url(#sakuraGradient)" transform="rotate(90)" />
+      <!-- Pétalo inferior izquierdo -->
+      <ellipse cx="-42" cy="42" rx="25" ry="45" fill="url(#sakuraGradient)" transform="rotate(135)" />
+      <!-- Pétalo izquierdo -->
+      <ellipse cx="-42" cy="-42" rx="25" ry="45" fill="url(#sakuraGradient)" transform="rotate(180)" />
+    </g>
+    
+    <!-- Centro de la flor -->
+    <circle cx="0" cy="0" r="20" fill="#FFD700" />
+    <circle cx="0" cy="0" r="15" fill="#FFA500" />
+  </g>
+  
+  <!-- Lista de tareas estilizada -->
+  <g transform="translate(256, 350)">
+    <!-- Papel/lista -->
+    <rect x="-80" y="-30" width="160" height="60" rx="8" ry="8" fill="white" stroke="rgba(0,0,0,0.1)" stroke-width="2"/>
+    
+    <!-- Líneas de texto -->
+    <line x1="-60" y1="-15" x2="40" y2="-15" stroke="#666" stroke-width="3" stroke-linecap="round"/>
+    <line x1="-60" y1="0" x2="60" y2="0" stroke="#666" stroke-width="3" stroke-linecap="round"/>
+    <line x1="-60" y1="15" x2="30" y2="15" stroke="#666" stroke-width="3" stroke-linecap="round"/>
+    
+    <!-- Checkmarks -->
+    <g transform="translate(-70, -20)">
+      <path d="M0,0 L8,8 L16,0" stroke="#32CD32" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    </g>
+    <g transform="translate(-70, -5)">
+      <path d="M0,0 L8,8 L16,0" stroke="#32CD32" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    </g>
+    <g transform="translate(-70, 10)">
+      <path d="M0,0 L8,8 L16,0" stroke="#32CD32" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    </g>
+  </g>
+  
+  <!-- Hojas decorativas -->
+  <g transform="translate(150, 150)">
+    <ellipse cx="0" cy="0" rx="15" ry="8" fill="url(#leafGradient)" transform="rotate(45)"/>
+  </g>
+  <g transform="translate(362, 150)">
+    <ellipse cx="0" cy="0" rx="15" ry="8" fill="url(#leafGradient)" transform="rotate(-45)"/>
+  </g>
+  <g transform="translate(150, 280)">
+    <ellipse cx="0" cy="0" rx="12" ry="6" fill="url(#leafGradient)" transform="rotate(30)"/>
+  </g>
+  <g transform="translate(362, 280)">
+    <ellipse cx="0" cy="0" rx="12" ry="6" fill="url(#leafGradient)" transform="rotate(-30)"/>
+  </g>
+</svg>
+
