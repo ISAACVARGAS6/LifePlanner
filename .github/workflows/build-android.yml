@@ -31,9 +31,6 @@ jobs:
     - name: Setup Android SDK
       uses: android-actions/setup-android@v3
       
-    - name: Accept Android SDK licenses
-      run: yes | sdkmanager --licenses
-      
     - name: Install dependencies
       run: npm install --legacy-peer-deps
         
@@ -50,7 +47,7 @@ jobs:
     - name: Build AAB
       run: |
         cd android
-        ./gradlew bundleRelease
+        ./gradlew bundleRelease --stacktrace
         
     - name: Upload AAB
       uses: actions/upload-artifact@v4
