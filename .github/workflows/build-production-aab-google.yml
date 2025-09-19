@@ -1,0 +1,82 @@
+name: Build Production AAB - Google Best Practices
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        
+    - name: Setup Java
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+        
+    - name: Setup Android SDK
+      uses: android-actions/setup-android@v3
+      
+    - name: Install dependencies
+      run: |
+        npm install --legacy-peer-deps
+        
+    - name: Clean workspace
+      run: |
+        rm -rf android
+        rm -rf node_modules/.cache
+        rm -rf .expo
+        
+    - name: Export for production
+      run: |
+        npx expo export --platform android
+        
+    - name: Prebuild Android
+      run: |
+        npx expo prebuild --platform android --clean
+        
+    - name: Generate production keystore
+      run: |
+        cd android/app
+        keytool -genkeypair -v -storetype PKCS12 -keystore lifeplanner-release-key.keystore -alias lifeplanner-key-alias -keyalg RSA -keysize 2048 -validity 10000 -storepass lifeplanner123 -keypass lifeplanner123 -dname "CN=LifePlanner, OU=Development, O=LifePlanner, L=City, S=State, C=US"
+        
+    - name: Verify keystore
+      run: |
+        cd android/app
+        keytool -list -v -keystore lifeplanner-release-key.keystore -storepass lifeplanner123
+        
+    - name: Verify build configuration
+      run: |
+        echo "🔍 Verificando configuración de firma..."
+        cd android/app
+        grep -A 15 "signingConfigs" build.gradle
+        echo "🔍 Verificando buildTypes..."
+        grep -A 15 "buildTypes" build.gradle
+        
+    - name: Build signed AAB
+      run: |
+        cd android
+        ./gradlew bundleRelease --no-daemon --stacktrace --info
+        
+    - name: Verify AAB signature
+      run: |
+        cd android/app/build/outputs/bundle/release
+        echo "🔍 Verificando firma del AAB..."
+        aapt dump badging app-release.aab | grep -i "debug\|release"
+        echo "📋 Información completa del AAB:"
+        aapt dump badging app-release.aab
+        
+    - name: Upload signed AAB
+      uses: actions/upload-artifact@v4
+      with:
+        name: app-release-signed.aab
+        path: android/app/build/outputs/bundle/release/app-release.aab
