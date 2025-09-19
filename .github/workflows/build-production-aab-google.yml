@@ -80,3 +80,4 @@ jobs:
       with:
         name: app-release-signed.aab
         path: android/app/build/outputs/bundle/release/app-release.aab
+
