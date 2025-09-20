@@ -1,0 +1,74 @@
+name: Build Production AAB - Native Build
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ master ]
+    paths:
+      - 'Frontend/**'
+
+jobs:
+  build-aab:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: Frontend/package-lock.json
+        
+    - name: Setup Java
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+        
+    - name: Setup Android SDK
+      uses: android-actions/setup-android@v3
+      
+    - name: Cache Gradle dependencies
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.gradle/caches
+          ~/.gradle/wrapper
+        key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+        restore-keys: |
+          ${{ runner.os }}-gradle-
+          
+    - name: Install dependencies
+      working-directory: Frontend
+      run: |
+        npm ci --legacy-peer-deps
+        
+    - name: Generate production keystore
+      working-directory: Frontend/android/app
+      run: |
+        keytool -genkeypair -v -storetype PKCS12 -keystore lifeplanner-release-key.keystore -alias lifeplanner-key-alias -keyalg RSA -keysize 2048 -validity 10000 -storepass lifeplanner123 -keypass lifeplanner123 -dname "CN=LifePlanner, OU=Development, O=LifePlanner, L=City, S=State, C=US"
+        
+    - name: Verify keystore
+      working-directory: Frontend/android/app
+      run: |
+        keytool -list -v -keystore lifeplanner-release-key.keystore -storepass lifeplanner123
+        
+    - name: Build AAB
+      working-directory: Frontend/android
+      run: |
+        ./gradlew bundleRelease --stacktrace --info
+        
+    - name: Verify AAB signature
+      run: |
+        cd Frontend/android/app/build/outputs/bundle/release
+        aapt dump badging app-release.aab | grep -E "(package|debuggable)"
+        
+    - name: Upload AAB
+      uses: actions/upload-artifact@v4
+      with:
+        name: app-release-signed
+        path: Frontend/android/app/build/outputs/bundle/release/app-release.aab
+        retention-days: 30
