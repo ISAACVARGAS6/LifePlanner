@@ -34,3 +34,4 @@ aapt dump badging app-release.aab | grep -E "(package|debuggable)"
 
 echo "✅ AAB generado exitosamente!"
 echo "📁 Ubicación: Frontend/android/app/build/outputs/bundle/release/app-release.aab"
+
