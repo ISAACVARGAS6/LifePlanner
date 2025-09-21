@@ -72,3 +72,4 @@ jobs:
         name: app-release-signed
         path: Frontend/android/app/build/outputs/bundle/release/app-release.aab
         retention-days: 30
+
