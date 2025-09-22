@@ -110,6 +110,12 @@ android {
             keyAlias 'lifeplanner-key-alias'
             keyPassword 'lifeplanner123'
         }
+        upload {
+            storeFile file('upload-keystore.keystore')
+            storePassword 'upload123'
+            keyAlias 'upload-key-alias'
+            keyPassword 'upload123'
+        }
     }
     buildTypes {
         debug {
