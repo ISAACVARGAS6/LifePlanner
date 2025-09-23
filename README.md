@@ -11,8 +11,6 @@ Su diferencial es un **personaje chibi animado** que reacciona al progreso o ret
 - ✅ Gestionar estados de tareas: **pendiente, en progreso, completada**.  
 - ✅ Reacciones dinámicas del **chibi** según el avance.  
 - ✅ **Monetización con AdMob** (banners y anuncios intersticiales).  
-- ✅ **Modo Premium**: proyectos ilimitados y sin publicidad.  
-
 ---
 
 ## 🛠️ Tecnologías usadas
