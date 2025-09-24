@@ -1,0 +1,190 @@
+from fastapi import APIRouter, Depends, HTTPException, Response, status
+from sqlalchemy.orm import Session, joinedload
+from typing import List
+from app.db import SessionLocal
+from app.models.project import Project
+from app.models.task import Task
+from app.schemas.project_schema import ProjectCreate, ProjectOut, ProjectUpdate
+from app.schemas.task_schema import TaskOut
+import logging
+import traceback
+from datetime import datetime
+
+# Configurar logging
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
+
+router = APIRouter()
+
+
+# Dependencia para obtener la DB
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+
+@router.post("/", response_model=ProjectOut, status_code=status.HTTP_201_CREATED)
+async def create_project(project: ProjectCreate, db: Session = Depends(get_db)):
+    try:
+        deadline_value = project.deadline
+        if isinstance(deadline_value, str):
+            deadline_value = datetime.fromisoformat(deadline_value)
+
+        db_project = Project(
+            title=project.title,
+            description=project.description,
+            status=project.status,
+            priority=project.priority,
+            category=project.category,
+            deadline=deadline_value
+        )
+
+        db.add(db_project)
+        db.commit()
+        db.refresh(db_project)
+        return db_project.to_dict()
+    except Exception as e:
+        logger.error(f"Error al crear proyecto: {str(e)}")
+        logger.error(traceback.format_exc())
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Error interno del servidor al crear el proyecto"
+        )
+
+
+@router.get("/", response_model=List[ProjectOut])
+async def get_projects(
+    status: str = None,
+    priority: str = None,
+    due_date_order: str = None,
+    db: Session = Depends(get_db)
+):
+    try:
+        query = db.query(Project).options(joinedload(Project.tasks))
+
+        if status:
+            query = query.filter(Project.status == status)
+        if priority:
+            query = query.filter(Project.priority == priority)
+        if due_date_order:
+            if due_date_order.lower() == 'asc':
+                query = query.order_by(Project.deadline.asc())
+            elif due_date_order.lower() == 'desc':
+                query = query.order_by(Project.deadline.desc())
+
+        projects = query.all()
+        return [project.to_dict() for project in projects]
+    except Exception as e:
+        logger.error(f"Error al obtener proyectos: {str(e)}")
+        logger.error(traceback.format_exc())
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error al obtener proyectos: {str(e)}"
+        )
+
+@router.get("/{project_id}", response_model=ProjectOut)
+async def get_project(project_id: int, db: Session = Depends(get_db)):
+    try:
+        project = db.query(Project).filter(Project.id == project_id).first()
+        if not project:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Proyecto no encontrado")
+        return project.to_dict()
+    except Exception as e:
+        logger.error(f"Error al obtener el proyecto {project_id}: {str(e)}")
+        logger.error(traceback.format_exc())
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error al obtener el proyecto {project_id}: {str(e)}"
+        )
+
+@router.get("/{project_id}/tasks", response_model=List[TaskOut])
+async def get_tasks_by_project(project_id: int, db: Session = Depends(get_db)):
+    try:
+        tasks = db.query(Task).filter(Task.project_id == project_id).all()
+        return [task.to_dict() for task in tasks]
+    except Exception as e:
+        logger.error(f"Error al obtener tareas del proyecto {project_id}: {str(e)}")
+        logger.error(traceback.format_exc())
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error al obtener tareas del proyecto {project_id}: {str(e)}"
+        )
+
+
+@router.put("/{project_id}", response_model=ProjectOut)
+async def update_project(
+    project_id: int,
+    project_data: ProjectCreate,
+    db: Session = Depends(get_db)
+):
+    try:
+        db_project = db.query(Project).filter(Project.id == project_id).first()
+
+        if not db_project:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Proyecto no encontrado"
+            )
+
+        update_data = project_data.model_dump(exclude_unset=True)
+        for field, value in update_data.items():
+            if field == 'deadline' and isinstance(value, str):
+                value = datetime.fromisoformat(value)
+            setattr(db_project, field, value)
+
+        db.commit()
+        db.refresh(db_project)
+        return db_project.to_dict()
+    except Exception as e:
+        db.rollback()
+        logger.error(f"Error al actualizar proyecto: {str(e)}")
+        logger.error(traceback.format_exc())
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error al actualizar proyecto: {str(e)}"
+        )
+
+
+@router.patch("/{project_id}", response_model=ProjectOut)
+async def patch_project(
+    project_id: int,
+    project_data: ProjectUpdate,
+    db: Session = Depends(get_db)
+):
+    try:
+        db_project = db.query(Project).filter(Project.id == project_id).first()
+        if not db_project:
+            raise HTTPException(status_code=404, detail="Proyecto no encontrado")
+
+        update_data = project_data.model_dump(exclude_unset=True)
+        for key, value in update_data.items():
+            if key == 'deadline' and isinstance(value, str):
+                value = datetime.fromisoformat(value)
+            setattr(db_project, key, value)
+
+        db.commit()
+        db.refresh(db_project)
+        return db_project.to_dict()
+    except Exception as e:
+        db.rollback()
+        logger.error(f"Error al hacer patch del proyecto: {str(e)}")
+        logger.error(traceback.format_exc())
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error al hacer patch del proyecto: {str(e)}"
+        )
+
+
+@router.delete("/{project_id}", status_code=204)
+def delete_project(project_id: int, db: Session = Depends(get_db)):
+    project = db.query(Project).filter(Project.id == project_id).first()
+    if not project:
+        raise HTTPException(status_code=404, detail="Proyecto no encontrado")
+
+    db.delete(project)
+    db.commit()
+    return Response(status_code=204)
+
