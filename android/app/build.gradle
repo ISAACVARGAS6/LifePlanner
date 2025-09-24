@@ -92,8 +92,8 @@ android {
         applicationId 'com.lifeplanner.app'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
-        versionName "1.0.0"
+        versionCode 5
+        versionName "1.0.5"
 
         buildConfigField "String", "REACT_NATIVE_RELEASE_LEVEL", "\"${findProperty('reactNativeReleaseLevel') ?: 'stable'}\""
     }
@@ -105,16 +105,10 @@ android {
             keyPassword 'android'
         }
         release {
-            storeFile file('lifeplanner-release-key.keystore')
+            storeFile file('lifeplanner-release.keystore')
             storePassword 'lifeplanner123'
-            keyAlias 'lifeplanner-key-alias'
+            keyAlias 'lifeplanner-key'
             keyPassword 'lifeplanner123'
-        }
-        upload {
-            storeFile file('upload-keystore.keystore')
-            storePassword 'upload123'
-            keyAlias 'upload-key-alias'
-            keyPassword 'upload123'
         }
     }
     buildTypes {
