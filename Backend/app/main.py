@@ -85,16 +85,20 @@ app = FastAPI(
 )
 
 # Configuración CORS
+import os
+ALLOWED_ORIGINS = os.getenv("ALLOWED_ORIGINS", "*").split(",")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # En producción, especifica los dominios permitidos
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Montar archivos estáticos
-app.mount("/static", StaticFiles(directory="static"), name="static")
+# Montar archivos estáticos (solo si existe el directorio)
+static_dir = Path(__file__).parent.parent / "static"
+if static_dir.exists():
+    app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
 
 # Inclusión de routers
 app.include_router(
