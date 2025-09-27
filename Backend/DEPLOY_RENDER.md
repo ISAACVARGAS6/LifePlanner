@@ -28,6 +28,8 @@ Build Command: pip install -r Backend/requirements-render.txt
 Start Command: gunicorn Backend.app.main:app -w 4 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT
 ```
 
+**⚠️ IMPORTANTE**: Asegúrate de usar `Backend/requirements-render.txt` y NO `requirements.txt`
+
 #### 4. Configurar variables de entorno
 En la sección "Environment Variables" de Render:
 
@@ -88,6 +90,8 @@ Backend/
 2. **Error de base de datos**: Asegúrate de que `DATABASE_URL` esté configurada
 3. **Error de CORS**: Configura `ALLOWED_ORIGINS` correctamente
 4. **Timeout**: El plan gratuito tiene límites de tiempo de inactividad
+5. **Error de requirements**: Usa `Backend/requirements-render.txt` NO `requirements.txt`
+6. **Error de build**: Verifica que el `Build Command` sea `pip install -r Backend/requirements-render.txt`
 
 ### URLs importantes después del despliegue:
 
