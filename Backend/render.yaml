@@ -1,0 +1,20 @@
+services:
+  - type: web
+    name: lifeplanner-backend
+    env: python
+    plan: free
+    buildCommand: pip install -r requirements-render.txt
+    startCommand: gunicorn app.main:app -w 4 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: lifeplanner-db
+          property: connectionString
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: PORT
+        value: 10000
+
+databases:
+  - name: lifeplanner-db
+    plan: free
