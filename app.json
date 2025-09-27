@@ -2,7 +2,7 @@
   "expo": {
     "name": "LifePlanner",
     "slug": "lifeplanner",
-    "version": "1.0.1",
+    "version": "1.0.14",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
@@ -39,6 +39,12 @@
         {
           "icon": "./assets/notification-icon.png",
           "color": "#ffffff"
+        }
+      ],
+      [
+        "react-native-google-mobile-ads",
+        {
+          "android_app_id": "ca-app-pub-3940256099942544~3347511713"
         }
       ]
     ],
