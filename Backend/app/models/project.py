@@ -74,7 +74,10 @@ class Project(Base):
     deadline = Column(DateTime)
     created_at = Column(DateTime, default=func.now())
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
 
+    # Relaciones
+    user = relationship("User", back_populates="projects")
     tasks = relationship("Task", back_populates="project", cascade="all, delete-orphan")
 
     @validates('status')

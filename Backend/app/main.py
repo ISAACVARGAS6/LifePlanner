@@ -9,10 +9,10 @@ from pathlib import Path
 import logging
 
 from app.db import Base, engine, SessionLocal
-from app.routes import project_route, task_route, chibi_route
+from app.routes import project_route, task_route, chibi_route, user_route
 
 # 🚨 IMPORTAR MODELOS para que Base los registre antes de create_all()
-from app.models import project, task
+from app.models import project, task, user
 
 # Configurar logging
 logging.basicConfig(level=logging.DEBUG)  # En producción usa INFO o WARNING
@@ -113,6 +113,12 @@ app.include_router(
     chibi_route.router,
     prefix="/lifeplanner",
     tags=["chibis"]
+)
+
+app.include_router(
+    user_route.router,
+    prefix="/lifeplanner/users",
+    tags=["users"]
 )
 
 # Ruta de salud

@@ -1,9 +1,10 @@
-from fastapi import APIRouter, Depends, HTTPException, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Response, status, Header
 from sqlalchemy.orm import Session, joinedload
-from typing import List
-from app.db import SessionLocal
+from typing import List, Optional
+from app.db import SessionLocal, get_db
 from app.models.project import Project
 from app.models.task import Task
+from app.models.user import User
 from app.schemas.project_schema import ProjectCreate, ProjectOut, ProjectUpdate
 from app.schemas.task_schema import TaskOut
 import logging
@@ -17,17 +18,30 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
-# Dependencia para obtener la DB
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+# Función para obtener el usuario actual
+def get_current_user(device_id: Optional[str] = Header(None, alias="X-Device-ID"), db: Session = Depends(get_db)) -> User:
+    """Obtener o crear el usuario actual basado en device_id"""
+    if not device_id:
+        # Si no hay device_id, crear un usuario temporal
+        device_id = "temp_user"
+    
+    user = db.query(User).filter(User.device_id == device_id).first()
+    
+    if not user:
+        # Crear un nuevo usuario automáticamente
+        user = User(
+            username=f"Usuario_{device_id[:8]}",
+            device_id=device_id
+        )
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+    
+    return user
 
 
 @router.post("/", response_model=ProjectOut, status_code=status.HTTP_201_CREATED)
-async def create_project(project: ProjectCreate, db: Session = Depends(get_db)):
+async def create_project(project: ProjectCreate, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     try:
         deadline_value = project.deadline
         if isinstance(deadline_value, str):
@@ -39,7 +53,8 @@ async def create_project(project: ProjectCreate, db: Session = Depends(get_db)):
             status=project.status,
             priority=project.priority,
             category=project.category,
-            deadline=deadline_value
+            deadline=deadline_value,
+            user_id=current_user.id
         )
 
         db.add(db_project)
@@ -60,10 +75,12 @@ async def get_projects(
     status: str = None,
     priority: str = None,
     due_date_order: str = None,
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     try:
-        query = db.query(Project).options(joinedload(Project.tasks))
+        # Filtrar por usuario actual
+        query = db.query(Project).options(joinedload(Project.tasks)).filter(Project.user_id == current_user.id)
 
         if status:
             query = query.filter(Project.status == status)
@@ -86,12 +103,15 @@ async def get_projects(
         )
 
 @router.get("/{project_id}", response_model=ProjectOut)
-async def get_project(project_id: int, db: Session = Depends(get_db)):
+async def get_project(project_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     try:
-        project = db.query(Project).filter(Project.id == project_id).first()
+        project = db.query(Project).filter(Project.id == project_id, Project.user_id == current_user.id).first()
         if not project:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Proyecto no encontrado")
         return project.to_dict()
+    except HTTPException:
+        # Re-raise HTTP exceptions (like 404) without wrapping them
+        raise
     except Exception as e:
         logger.error(f"Error al obtener el proyecto {project_id}: {str(e)}")
         logger.error(traceback.format_exc())
@@ -101,8 +121,13 @@ async def get_project(project_id: int, db: Session = Depends(get_db)):
         )
 
 @router.get("/{project_id}/tasks", response_model=List[TaskOut])
-async def get_tasks_by_project(project_id: int, db: Session = Depends(get_db)):
+async def get_tasks_by_project(project_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     try:
+        # Verificar que el proyecto pertenece al usuario
+        project = db.query(Project).filter(Project.id == project_id, Project.user_id == current_user.id).first()
+        if not project:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Proyecto no encontrado")
+        
         tasks = db.query(Task).filter(Task.project_id == project_id).all()
         return [task.to_dict() for task in tasks]
     except Exception as e:
@@ -118,10 +143,11 @@ async def get_tasks_by_project(project_id: int, db: Session = Depends(get_db)):
 async def update_project(
     project_id: int,
     project_data: ProjectCreate,
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     try:
-        db_project = db.query(Project).filter(Project.id == project_id).first()
+        db_project = db.query(Project).filter(Project.id == project_id, Project.user_id == current_user.id).first()
 
         if not db_project:
             raise HTTPException(
@@ -152,10 +178,11 @@ async def update_project(
 async def patch_project(
     project_id: int,
     project_data: ProjectUpdate,
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     try:
-        db_project = db.query(Project).filter(Project.id == project_id).first()
+        db_project = db.query(Project).filter(Project.id == project_id, Project.user_id == current_user.id).first()
         if not db_project:
             raise HTTPException(status_code=404, detail="Proyecto no encontrado")
 
@@ -179,8 +206,8 @@ async def patch_project(
 
 
 @router.delete("/{project_id}", status_code=204)
-def delete_project(project_id: int, db: Session = Depends(get_db)):
-    project = db.query(Project).filter(Project.id == project_id).first()
+def delete_project(project_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    project = db.query(Project).filter(Project.id == project_id, Project.user_id == current_user.id).first()
     if not project:
         raise HTTPException(status_code=404, detail="Proyecto no encontrado")
 
