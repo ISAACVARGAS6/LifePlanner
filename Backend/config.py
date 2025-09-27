@@ -9,7 +9,7 @@ class Settings(BaseSettings):
     PORT: int = 8000
     
     # Configuración de seguridad
-    SECRET_KEY: str = "your-secret-key-here"  # Cambiar en producción
+    SECRET_KEY: str = "your-secret-key-here-change-in-production"  # Cambiar en producción
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     

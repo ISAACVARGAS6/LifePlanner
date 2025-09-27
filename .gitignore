@@ -10,6 +10,8 @@
 service-account*.json
 google-services.json
 GoogleService-Info.plist
+my-release-key.keystore
+lifeplanner-release-key.keystore
 
 # Bases de datos
 *.db
@@ -100,3 +102,4 @@ htmlcov/
 # Archivos de cache
 .cache/
 .parcel-cache/
+
