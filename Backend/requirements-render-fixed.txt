@@ -16,3 +16,4 @@ pytz==2025.2
 
 # Dependencias adicionales para compatibilidad
 greenlet==3.1.1
+

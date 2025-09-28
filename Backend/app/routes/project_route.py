@@ -43,9 +43,20 @@ def get_current_user(device_id: Optional[str] = Header(None, alias="X-Device-ID"
 @router.post("/", response_model=ProjectOut, status_code=status.HTTP_201_CREATED)
 async def create_project(project: ProjectCreate, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     try:
-        deadline_value = project.deadline
-        if isinstance(deadline_value, str):
-            deadline_value = datetime.fromisoformat(deadline_value)
+        logger.info(f"Creando proyecto: {project.title} para usuario {current_user.id}")
+        
+        # Procesar deadline de forma más robusta
+        deadline_value = None
+        if project.deadline:
+            if isinstance(project.deadline, str):
+                try:
+                    # Intentar parsear la fecha
+                    deadline_value = datetime.fromisoformat(project.deadline.replace('Z', '+00:00'))
+                except ValueError:
+                    logger.warning(f"Formato de fecha inválido: {project.deadline}")
+                    deadline_value = None
+            else:
+                deadline_value = project.deadline
 
         db_project = Project(
             title=project.title,
@@ -60,13 +71,16 @@ async def create_project(project: ProjectCreate, current_user: User = Depends(ge
         db.add(db_project)
         db.commit()
         db.refresh(db_project)
+        
+        logger.info(f"Proyecto creado exitosamente con ID: {db_project.id}")
         return db_project.to_dict()
     except Exception as e:
         logger.error(f"Error al crear proyecto: {str(e)}")
         logger.error(traceback.format_exc())
+        db.rollback()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Error interno del servidor al crear el proyecto"
+            detail=f"Error interno del servidor al crear el proyecto: {str(e)}"
         )
 
 
