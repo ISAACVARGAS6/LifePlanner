@@ -42,3 +42,4 @@ curl -X POST "https://lifeplanner-zjn3.onrender.com/lifeplanner/projects/" \
 - El backend ahora maneja mejor los errores de validación
 - Las fechas inválidas no causan fallos del servidor
 - Se agregó logging detallado para facilitar el debugging
+
