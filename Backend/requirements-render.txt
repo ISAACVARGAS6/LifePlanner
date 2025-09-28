@@ -14,3 +14,6 @@ passlib[bcrypt]==1.7.4
 email-validator==2.2.0
 pytz==2025.2
 
+# Dependencias adicionales para compatibilidad
+greenlet==3.1.1
+
