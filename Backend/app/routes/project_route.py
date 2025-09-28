@@ -29,13 +29,32 @@ def get_current_user(device_id: Optional[str] = Header(None, alias="X-Device-ID"
     
     if not user:
         # Crear un nuevo usuario automáticamente
+        # Generar username único basado en timestamp para evitar conflictos
+        import time
+        timestamp = int(time.time())
+        username = f"Usuario_{device_id[:8]}_{timestamp}"
+        
         user = User(
-            username=f"Usuario_{device_id[:8]}",
+            username=username,
             device_id=device_id
         )
-        db.add(user)
-        db.commit()
-        db.refresh(user)
+        try:
+            db.add(user)
+            db.commit()
+            db.refresh(user)
+        except Exception as e:
+            db.rollback()
+            logger.error(f"Error al crear usuario: {str(e)}")
+            # Si falla por username duplicado, intentar con otro timestamp
+            timestamp = int(time.time() * 1000)  # Usar milisegundos
+            username = f"Usuario_{device_id[:8]}_{timestamp}"
+            user = User(
+                username=username,
+                device_id=device_id
+            )
+            db.add(user)
+            db.commit()
+            db.refresh(user)
     
     return user
 
