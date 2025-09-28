@@ -1,4 +1,4 @@
-# Dependencias principales para Render.com
+# Dependencias principales para Render.com - Versión corregida
 fastapi==0.115.8
 uvicorn[standard]==0.34.2
 gunicorn==23.0.0
@@ -16,4 +16,3 @@ pytz==2025.2
 
 # Dependencias adicionales para compatibilidad
 greenlet==3.1.1
-
