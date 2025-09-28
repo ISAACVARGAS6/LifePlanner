@@ -2,20 +2,24 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, DeclarativeBase
 import os
 
-# Obtener la ruta del directorio actual
-current_dir = os.path.dirname(os.path.abspath(__file__))
-parent_dir = os.path.dirname(current_dir)
+# Leer DATABASE_URL de entorno (Render lo provee automáticamente)
+DATABASE_URL = os.getenv("DATABASE_URL")
 
-# Construir la ruta de la base de datos
-DATABASE_URL = f"sqlite:///{parent_dir}/lifeplanner.db"
-
-# Imprimir la ruta de la base de datos (para debugging)
-print(f"📁 Usando base de datos en: {parent_dir}/lifeplanner.db")
+if DATABASE_URL:
+    # Render usa PostgreSQL → SQLAlchemy requiere reemplazar "postgres://" por "postgresql://"
+    if DATABASE_URL.startswith("postgres://"):
+        DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+else:
+    # Si no existe, usar SQLite local (modo desarrollo)
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    parent_dir = os.path.dirname(current_dir)
+    DATABASE_URL = f"sqlite:///{parent_dir}/lifeplanner.db"
+    print(f"📁 Usando base de datos local en: {DATABASE_URL}")
 
 # Crear el motor de la base de datos
 engine = create_engine(
     DATABASE_URL,
-    connect_args={"check_same_thread": False}
+    connect_args={"check_same_thread": False} if DATABASE_URL.startswith("sqlite") else {}
 )
 
 # Crear la sesión
@@ -37,4 +41,3 @@ def get_db():
 def init_db():
     Base.metadata.create_all(bind=engine)
     print("✅ Base de datos conectada correctamente")
-

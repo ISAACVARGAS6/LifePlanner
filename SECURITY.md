@@ -126,3 +126,5 @@ KEY_PASSWORD=tu-password-key
 - **Render Environment Variables**: Para despliegue
 - **Android Keystore**: Para firma de aplicaciones
 - **PostgreSQL**: Para base de datos en producción
+
+
