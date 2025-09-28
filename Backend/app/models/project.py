@@ -129,14 +129,16 @@ class Project(Base):
                     deadline_date_only = deadline_date.date()
                     current_date_only = current.date()
                     
-                    if deadline_date_only < current_date_only:
-                        raise ValueError("La fecha límite no puede estar en el pasado")
+                    # Permitir fechas en el pasado para proyectos existentes
+                    # if deadline_date_only < current_date_only:
+                    #     raise ValueError("La fecha límite no puede estar en el pasado")
                     
                     return deadline_date
                 return deadline
             except ValueError as e:
                 if "fromisoformat" in str(e):
-                    raise ValueError("Formato de fecha inválido")
+                    # En lugar de fallar, retornar None para fechas inválidas
+                    return None
                 raise e
         return deadline
 

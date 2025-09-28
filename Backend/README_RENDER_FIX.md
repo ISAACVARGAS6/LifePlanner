@@ -53,3 +53,4 @@ greenlet==3.1.1
 - Python 3.11.9 es compatible con `psycopg2-binary==2.9.9`
 - `greenlet==3.1.1` es necesario para SQLAlchemy
 - Render respeta el archivo `runtime.txt` para la versión de Python
+
