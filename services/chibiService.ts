@@ -53,7 +53,7 @@ export interface SchoolSchedule {
 }
 
 // Configuración de la API
-const API_BASE_URL = 'http://192.168.3.188:8000/lifeplanner/chibis';
+const API_BASE_URL = 'http://localhost:8000/lifeplanner/chibis';
 
 class ChibiService {
   /**
@@ -61,7 +61,7 @@ class ChibiService {
    */
   async checkBackendConnection(): Promise<boolean> {
     try {
-      const response = await fetch('http://192.168.3.188:8000/lifeplanner/chibis/types', {
+      const response = await fetch('http://localhost:8000/lifeplanner/chibis/types', {
         method: 'GET'
       });
       return response.ok;
@@ -390,7 +390,7 @@ class ChibiService {
     }
     
     // Si es una URL relativa, la convertimos a completa
-    const baseUrl = 'http://192.168.3.188:8000';
+    const baseUrl = 'http://localhost:8000';
     return `${baseUrl}${chibiUrl}`;
   }
 }
