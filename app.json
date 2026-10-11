@@ -1,0 +1,12 @@
+{
+  "expo": {
+    "extra": {
+      "eas": {
+        "projectId": "46c506a2-9a59-4790-ae70-983382aa6804"
+      }
+    },
+    "android": {
+      "package": "com.isaacvc.applifeplanner"
+    }
+  }
+}
